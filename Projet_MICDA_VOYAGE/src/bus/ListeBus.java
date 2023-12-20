@@ -1,6 +1,8 @@
 package bus;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,7 +11,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -18,16 +23,18 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 
 public class ListeBus extends JFrame {
-    private static final long serialVersionUID = -6856259460021850295L;
     private JTable table;
 
     public ListeBus() {
         setTitle("Tableau des Bus");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(600, 400);
+        setSize(800, 600);
 
         DefaultTableModel model = new DefaultTableModel();
         table = new JTable(model);
@@ -37,6 +44,7 @@ public class ListeBus extends JFrame {
         model.addColumn("Description");
         model.addColumn("NombreSiege");
         model.addColumn("EtatBus");
+        model.addColumn("Action");
 
         fillTable();
 
@@ -46,7 +54,6 @@ public class ListeBus extends JFrame {
         JPanel panel = new JPanel();
         JButton addButton = new JButton("Ajouter");
         JButton deleteButton = new JButton("Supprimer");
-        JButton editButton = new JButton("Éditer");
 
         addButton.addActionListener(new ActionListener() {
             @Override
@@ -112,25 +119,60 @@ public class ListeBus extends JFrame {
         });
 
 
+        
+        
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Code pour supprimer un bus
-            }
-        });
-
-        editButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Code pour éditer un bus
+                // ...
             }
         });
 
         panel.add(addButton);
         panel.add(deleteButton);
-        panel.add(editButton);
 
         add(panel, BorderLayout.SOUTH);
+
+        // Ajouter le bouton "Éditer" à chaque ligne
+        addEditButtonToTable();
+    }
+    class EditButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int selectedRow = ListeBus.this.table.getSelectedRow();
+            String codeBus = (String) ListeBus.this.table.getValueAt(selectedRow, 0);
+            String nomBus = (String) ListeBus.this.table.getValueAt(selectedRow, 1);
+            String description = (String) ListeBus.this.table.getValueAt(selectedRow, 2);
+            int nombreSiege = (int) ListeBus.this.table.getValueAt(selectedRow, 3);
+            String etatBus = (String) ListeBus.this.table.getValueAt(selectedRow, 4);
+
+            // Instancier la boîte de dialogue d'édition avec les données actuelles du bus
+            EditBusDialog editDialog = new EditBusDialog(ListeBus.this, codeBus, nomBus, description, nombreSiege, etatBus);
+
+            // Afficher la boîte de dialogue et récupérer les données éditées
+            if (editDialog.showDialog()) {
+                String newNom = editDialog.getNom();
+                String newDescription = editDialog.getDescription();
+                int newNombreSiege = editDialog.getNombreSiege();
+                String newEtatBus = editDialog.getEtatBus();
+
+                // Mettre à jour les données dans le tableau
+                ListeBus.this.table.setValueAt(newNom, selectedRow, 1);
+                ListeBus.this.table.setValueAt(newDescription, selectedRow, 2);
+                ListeBus.this.table.setValueAt(newNombreSiege, selectedRow, 3);
+                ListeBus.this.table.setValueAt(newEtatBus, selectedRow, 4);
+
+                // Mettre à jour les données dans la base de données
+                ListeBus.this.editerBus(codeBus, newNom, newDescription, newNombreSiege, newEtatBus);
+            }
+        }
+    }
+
+    private void addEditButtonToTable() {
+        TableColumn editColumn = table.getColumnModel().getColumn(5);
+        editColumn.setCellRenderer(new ButtonRenderer());
+        editColumn.setCellEditor(new ButtonEditor(new JCheckBox(), new EditButtonListener()));
     }
 
     private void fillTable() {
@@ -141,52 +183,22 @@ public class ListeBus extends JFrame {
                      ResultSet resultSet = preparedStatement.executeQuery()) {
 
                     while (resultSet.next()) {
-                        Object[] row = new Object[5];
+                        Object[] row = new Object[6]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
                         row[0] = resultSet.getString("CodeBus");
                         row[1] = resultSet.getString("NomBus");
                         row[2] = resultSet.getString("Description");
                         row[3] = resultSet.getInt("NombreSiege");
                         row[4] = resultSet.getString("EtatBus");
+                        row[5] = "Éditer";
 
                         ((DefaultTableModel) table.getModel()).addRow(row);
                     }
-
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
             } else {
                 System.out.println("La connexion à la base de données a échoué.");
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void ajouterBus(String codeBus, String nomBus, String description, int nombreSiege, String etatBus) {
-        String query = "INSERT INTO bus (CodeBus, NomBus, Description, NombreSiege, EtatBus) VALUES (?, ?, ?, ?, ?)";
-        try (Connection connection = ConnexionBD.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, codeBus);
-            preparedStatement.setString(2, nomBus);
-            preparedStatement.setString(3, description);
-            preparedStatement.setInt(4, nombreSiege);
-            preparedStatement.setString(5, etatBus);
-
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void supprimerBus(String codeBus) {
-        String query = "DELETE FROM bus WHERE CodeBus = ?";
-        try (Connection connection = ConnexionBD.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, codeBus);
-
-            preparedStatement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -211,8 +223,163 @@ public class ListeBus extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-        	ListeBus frame = new ListeBus();
+            ListeBus frame = new ListeBus();
             frame.setVisible(true);
         });
+    }
+}
+
+class ButtonRenderer extends JButton implements TableCellRenderer {
+    public ButtonRenderer() {
+        setOpaque(true);
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+                                                   int row, int column) {
+        if (isSelected) {
+            setForeground(table.getSelectionForeground());
+            setBackground(table.getSelectionBackground());
+        } else {
+            setForeground(table.getForeground());
+            setBackground(UIManager.getColor("Button.background"));
+        }
+        setText((value == null) ? "" : value.toString());
+        return this;
+    }
+}
+
+class ButtonEditor extends DefaultCellEditor {
+    private JButton button;
+    private String label;
+    private boolean isPushed;
+    private ActionListener listener;
+
+    public ButtonEditor(JCheckBox checkBox, ActionListener listener) {
+        super(checkBox);
+        this.listener = listener;
+        button = new JButton();
+        button.setOpaque(true);
+        button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                fireEditingStopped();
+                listener.actionPerformed(e);
+            }
+        });
+    }
+
+    @Override
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+        if (isSelected) {
+            button.setForeground(table.getSelectionForeground());
+            button.setBackground(table.getSelectionBackground());
+        } else {
+            button.setForeground(table.getForeground());
+            button.setBackground(table.getBackground());
+        }
+        label = (value == null) ? "" : value.toString();
+        button.setText(label);
+        isPushed = true;
+        return button;
+    }
+
+    @Override
+    public Object getCellEditorValue() {
+        isPushed = false;
+        return label;
+    }
+
+    @Override
+    public boolean stopCellEditing() {
+        isPushed = false;
+        return super.stopCellEditing();
+    }
+
+    @Override
+    protected void fireEditingStopped() {
+        super.fireEditingStopped();
+    }
+}
+
+class EditBusDialog extends JDialog {
+    private JTextField nomField;
+    private JTextField descriptionField;
+    private JTextField nombreSiegeField;
+    private JTextField etatBusField;
+
+    private boolean confirmed;
+
+    public EditBusDialog(JFrame parent, String codeBus, String nomBus, String description, int nombreSiege, String etatBus) {
+        super(parent, "Éditer le bus", true);
+        setLayout(new BorderLayout());
+        setSize(300, 200);
+
+        nomField = new JTextField(nomBus);
+        descriptionField = new JTextField(description);
+        nombreSiegeField = new JTextField(Integer.toString(nombreSiege));
+        etatBusField = new JTextField(etatBus);
+
+        JButton saveButton = new JButton("Enregistrer");
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                confirmed = true;
+                dispose();
+            }
+        });
+
+        JButton cancelButton = new JButton("Annuler");
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
+        });
+
+        JPanel inputPanel = new JPanel(new GridLayout(4, 2));
+        inputPanel.add(new JLabel("NomBus:"));
+        inputPanel.add(nomField);
+        inputPanel.add(new JLabel("Description:"));
+        inputPanel.add(descriptionField);
+        inputPanel.add(new JLabel("NombreSiege:"));
+        inputPanel.add(nombreSiegeField);
+        inputPanel.add(new JLabel("EtatBus:"));
+        inputPanel.add(etatBusField);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+
+        add(inputPanel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        setLocationRelativeTo(parent);
+    }
+
+    public boolean showDialog() {
+        confirmed = false;
+        setVisible(true);
+        return confirmed;
+    }
+
+    public String getNom() {
+        return nomField.getText();
+    }
+
+    public String getDescription() {
+        return descriptionField.getText();
+    }
+
+    public int getNombreSiege() {
+        try {
+            return Integer.parseInt(nombreSiegeField.getText());
+        } catch (NumberFormatException e) {
+            return 0; // Gestion de l'erreur si la conversion échoue
+        }
+    }
+
+    public String getEtatBus() {
+        return etatBusField.getText();
     }
 }
