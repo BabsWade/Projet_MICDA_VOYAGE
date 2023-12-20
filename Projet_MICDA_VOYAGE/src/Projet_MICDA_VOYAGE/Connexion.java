@@ -14,13 +14,16 @@ import javax.swing.SwingConstants;
 import java.awt.Font;
 import javax.swing.JTextField;
 import javax.swing.JButton;
+import javax.swing.JPasswordField;
+import org.eclipse.wb.swing.FocusTraversalOnArray;
+import java.awt.Component;
 
 public class Connexion extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private JTextField txtUser;
-	private JTextField txtPassword;
+	private JPasswordField txtPassword;
 
 	/**
 	 * Launch the application.
@@ -71,11 +74,6 @@ public class Connexion extends JFrame {
 		Connexion.add(txtUser);
 		txtUser.setColumns(10);
 		
-		txtPassword = new JTextField();
-		txtPassword.setColumns(10);
-		txtPassword.setBounds(200, 300, 225, 30);
-		Connexion.add(txtPassword);
-		
 		JLabel labelUsername = new JLabel("Username :");
 		labelUsername.setForeground(UIManager.getColor("Button.highlight"));
 		labelUsername.setFont(new Font("Lucida Grande", Font.PLAIN, 16));
@@ -94,5 +92,10 @@ public class Connexion extends JFrame {
 		btnConnexion.setForeground(Color.decode("#04224c"));
 		btnConnexion.setBounds(200, 431, 120, 35);
 		Connexion.add(btnConnexion);
+		
+		txtPassword = new JPasswordField();
+		txtPassword.setBounds(200, 303, 225, 30);
+		Connexion.add(txtPassword);
+		Connexion.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{lableTitle, txtUser, labelUsername, labelPassword, btnConnexion, txtPassword}));
 	}
 }
