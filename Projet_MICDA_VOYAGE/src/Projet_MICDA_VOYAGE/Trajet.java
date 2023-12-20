@@ -6,9 +6,18 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.DateFormatter;
+
+import com.toedter.calendar.JDateChooser;
+import com.toedter.components.JLocaleChooser;
+import com.toedter.components.JLocaleChooserBeanInfo;
+
 import java.awt.Color;
 import javax.swing.JLabel;
 import java.awt.Font;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.JTextField;
@@ -27,8 +36,10 @@ public class Trajet extends JFrame {
 	private JPanel contentPane;
 	private JTextField txtCodeTrajet;
 	private JTextField txtNomTrajet;
-	private JTextField textField_5;
+	private JTextField txtHeureDepart;
 	private JTable tableTrajet;
+	private JDateChooser dateDepart;
+	private JLocaleChooser heureDepart;
 
 	/**
 	 * Launch the application.
@@ -119,10 +130,10 @@ public class Trajet extends JFrame {
 		labelHeureDepart.setBounds(1100, 101, 105, 20);
 		contentPane.add(labelHeureDepart);
 		
-		textField_5 = new JTextField();
-		textField_5.setColumns(10);
-		textField_5.setBounds(1220, 96, 200, 30);
-		contentPane.add(textField_5);
+		/*txtHeureDepart = new JTextField();
+		txtHeureDepart.setColumns(10);
+		txtHeureDepart.setBounds(1220, 96, 200, 30);
+		contentPane.add(txtHeureDepart);*/
 		
 		JButton btnUpdate = new JButton("Update");
 		btnUpdate.setFont(new Font("Lucida Grande", Font.BOLD, 16));
@@ -151,26 +162,35 @@ public class Trajet extends JFrame {
 		tableTrajet.setBounds(8, 320, 1420, 420);
 		contentPane.add(tableTrajet);
 		
-		JComboBox comboBox = new JComboBox();
-		comboBox.setModel(new DefaultComboBoxModel(new String[] {"Dakar", "Kaolack", "Fatick", "Thies", "Faffrine", "Tambacounda", "Kedougou", "Sédhiou", "Louga", "Saint-Louis", "Diourbel", "Kolda", "Ziguinchor", "Matam"}));
-		comboBox.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
-		comboBox.setBounds(500, 173, 200, 30);
-		contentPane.add(comboBox);
+		JComboBox comboBoxVilleArrivee = new JComboBox();
+		comboBoxVilleArrivee.setModel(new DefaultComboBoxModel(new String[] {"Dakar", "Kaolack", "Fatick", "Thies", "Faffrine", "Tambacounda", "Kedougou", "Sédhiou", "Louga", "Saint-Louis", "Diourbel", "Kolda", "Ziguinchor", "Matam"}));
+		comboBoxVilleArrivee.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
+		comboBoxVilleArrivee.setBounds(500, 173, 200, 30);
+		contentPane.add(comboBoxVilleArrivee);
 		
-		JComboBox comboBox_2 = new JComboBox();
-		comboBox_2.setModel(new DefaultComboBoxModel(new String[] {"AA001-DK01", "AA002-DK01", "AA003-DK01", "AA004-DK02", "AA005-DK02", "AA006-TH01", "AA007-TH01", "AA008-TH01", "AA009-TH02", "AA010-TH02", "AA011-TH03", "AA012-TH03", "AA013-KL01", "AA014-KL01", "AA015-ZG01", "AA016-ZG01"}));
-		comboBox_2.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
-		comboBox_2.setBounds(502, 97, 200, 30);
-		contentPane.add(comboBox_2);
+		JComboBox comboBoxBusAssocie = new JComboBox();
+		comboBoxBusAssocie.setModel(new DefaultComboBoxModel(new String[] {"AA001-DK01", "AA002-DK01", "AA003-DK01", "AA004-DK02", "AA005-DK02", "AA006-TH01", "AA007-TH01", "AA008-TH01", "AA009-TH02", "AA010-TH02", "AA011-TH03", "AA012-TH03", "AA013-KL01", "AA014-KL01", "AA015-ZG01", "AA016-ZG01"}));
+		comboBoxBusAssocie.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
+		comboBoxBusAssocie.setBounds(502, 97, 200, 30);
+		contentPane.add(comboBoxBusAssocie);
 		
-		JComboBox comboBox_3 = new JComboBox();
-		comboBox_3.setModel(new DefaultComboBoxModel(new String[] {"Dakar", "Kaolack", "Fatick", "Thies", "Faffrine", "Tambacounda", "Kedougou", "Sédhiou", "Louga", "Saint-Louis", "Diourbel", "Kolda", "Ziguinchor", "Matam"}));
-		comboBox_3.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
-		comboBox_3.setBounds(160, 173, 200, 30);
-		contentPane.add(comboBox_3);
+		JComboBox comboBoxVilleDepart = new JComboBox();
+		comboBoxVilleDepart.setModel(new DefaultComboBoxModel(new String[] {"Dakar", "Kaolack", "Fatick", "Thies", "Faffrine", "Tambacounda", "Kedougou", "Sédhiou", "Louga", "Saint-Louis", "Diourbel", "Kolda", "Ziguinchor", "Matam"}));
+		comboBoxVilleDepart.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
+		comboBoxVilleDepart.setBounds(160, 173, 200, 30);
+		contentPane.add(comboBoxVilleDepart);
 		
-		JFormattedTextField formattedTextField = new JFormattedTextField();
-		formattedTextField.setBounds(852, 172, 200, 30);
-		contentPane.add(formattedTextField);
+		
+		//Date depart
+		dateDepart = new JDateChooser();
+		dateDepart.setBounds(850, 165, 200, 30);
+		add(dateDepart);
+		
+		//heureDepart
+		SimpleDateFormat heureDepart = new SimpleDateFormat("HH:MM");//Creer un objet SimpleDateFormat pour formatter l'heure si on formatte pas il affiche par defaut date et heure
+		JFormattedTextField txtHeureDepart = new JFormattedTextField(new DateFormatter(heureDepart));//Creer JFormattedTextField avec le DateFormatter
+		txtHeureDepart.setBounds(1220, 96, 200, 30);
+		txtHeureDepart.setValue(new Date()); // valeur par defaut date actuel
+		add(txtHeureDepart);
 	}
 }
