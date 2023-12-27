@@ -5,6 +5,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DateFormatter;
 
@@ -42,6 +43,8 @@ import javax.swing.JFormattedTextField;
 import javax.swing.ListSelectionModel;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import javax.swing.table.JTableHeader;
+import javax.swing.border.LineBorder;
 
 public class Trajet extends JFrame {
 	private ConnexionBD connexionDB;
@@ -52,6 +55,8 @@ public class Trajet extends JFrame {
 	private JTextField txtNomTrajet;
 	private JTable tableTrajet;
 	private JDateChooser dateDepart;
+	private JTable table;
+	private JTable table_1;
 	/**
 	 * Launch the application.
 	 */
@@ -142,11 +147,6 @@ public class Trajet extends JFrame {
 		labelHeureDepart.setBounds(1100, 101, 105, 20);
 		contentPane.add(labelHeureDepart);
 		
-		/*txtHeureDepart = new JTextField();
-		txtHeureDepart.setColumns(10);
-		txtHeureDepart.setBounds(1220, 96, 200, 30);
-		contentPane.add(txtHeureDepart);*/
-		
 		JButton btnUpdate = new JButton("Update");
 		btnUpdate.setFont(new Font("Lucida Grande", Font.BOLD, 16));
 		btnUpdate.setForeground(UIManager.getColor("CheckBox.foreground"));
@@ -172,46 +172,10 @@ public class Trajet extends JFrame {
 		btnDelete.setBounds(721, 255, 117, 35);
 		contentPane.add(btnDelete);
 		
-		//Tableau		
-  
-        
-    // Créer un DefaultTableModel avec les noms de colonnes
-		DefaultTableModel model = new DefaultTableModel();
-        tableTrajet = new JTable(model);
-		model.addColumn("CodeBus");
-        model.addColumn("NomBus");
-        model.addColumn("Description");
-        model.addColumn("NombreSiege");
-        model.addColumn("EtatBus");
-        model.addColumn("Action");
-        // Ajouter la table avec le modèle
-        
-        tableTrajet.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		tableTrajet.setSurrendersFocusOnKeystroke(true);
-		tableTrajet.setFillsViewportHeight(true);
-		tableTrajet.setColumnSelectionAllowed(true);
-		tableTrajet.setCellSelectionEnabled(true);
-		tableTrajet.setBounds(8, 320, 1420, 420);
-		contentPane.add(tableTrajet);
-        tableTrajet = new JTable(model);
-        //fillTable();
-        JScrollPane scrollPane = new JScrollPane(tableTrajet);
-        getContentPane().add(scrollPane, BorderLayout.CENTER);
-
-        // Ajouter la table au contentPane
-        tableTrajet.setBounds(8, 320, 1420, 420);
-        getContentPane().add(new JScrollPane(tableTrajet)); // Utilisation de JScrollPane pour gérer les en-têtes de colonnes
-
-
-        // Ajouter la table au contentPane
-        tableTrajet.setBounds(8, 320, 1420, 420);
-        getContentPane().add(new JScrollPane(tableTrajet)); // Utilisation de JScrollPane pour gérer les en-têtes de colonnes
-		
 		JComboBox comboBoxVilleArrivee = new JComboBox();
 		comboBoxVilleArrivee.setModel(new DefaultComboBoxModel(new String[] {"Dakar", "Kaolack", "Fatick", "Thies", "Faffrine", "Tambacounda", "Kedougou", "Sédhiou", "Louga", "Saint-Louis", "Diourbel", "Kolda", "Ziguinchor", "Matam"}));
 		comboBoxVilleArrivee.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
 		comboBoxVilleArrivee.setBounds(500, 173, 200, 30);
-		 getContentPane().add(new JScrollPane(tableTrajet)); // Utilisation de JScrollPane pour gérer les en-têtes de colonnes
 		contentPane.add(comboBoxVilleArrivee);
 		
 		JComboBox comboBoxBusAssocie = new JComboBox();
@@ -239,6 +203,69 @@ public class Trajet extends JFrame {
 		txtHeureDepart.setBounds(1220, 96, 200, 30);
 		txtHeureDepart.setValue(new Date()); // valeur par defaut date actuel
 		getContentPane().add(txtHeureDepart);
+		
+		JScrollPane scrollpane = new JScrollPane();
+		scrollpane.setBounds(50, 300, 1350, 450);
+		getContentPane().add(scrollpane);
+		
+		table_1 = new JTable();
+		scrollpane.setViewportView(table_1);
+		//Create a separate component for column headers
+		JTableHeader header = table_1.getTableHeader();
+		scrollpane.setColumnHeaderView(header);
+		table_1.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		//table_1.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
+		table_1.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
+		header.setFont(new Font("Lucida Grande", Font.PLAIN, 16));
+		table_1.setForeground(UIManager.getColor("Button.darkShadow"));
+		table_1.setBackground(UIManager.getColor("Button.highlight"));
+		table_1.setFillsViewportHeight(true);
+		table_1.setColumnSelectionAllowed(true);
+		table_1.setCellSelectionEnabled(true);
+		table_1.setSurrendersFocusOnKeystroke(true);
+		table_1.setModel(new DefaultTableModel(
+				new Object[][] {
+					
+				},
+				new String[] {
+						"Code Trajet", "Bus Associe", "Nom Trajet", "Ville Depart", "Ville Arrivee", "Date Depart", "Heure Depart"
+				}
+				));
+		
+		//Affichage 
+		
+		
+	        try (Connection connection = ConnexionBD.getConnection()) {
+	            if (connection != null) {
+	                String query = "SELECT codeTrajet, BusAssocie, NomTrajet, VilleDepart, VilleArrivee, DateDepart, HeureDepart FROM Trajet ORDER BY DateDepart DESC";
+	                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+	                     ResultSet resultSet = preparedStatement.executeQuery()) {
+
+	                    while (resultSet.next()) {
+	                        Object[] row = new Object[8]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
+	                        row[0] = resultSet.getString("CodeTrajet");
+	                        row[1] = resultSet.getString("BusAssocie");
+	                        row[2] = resultSet.getString("NomTrajet");
+	                        row[3] = resultSet.getString("VilleDepart");
+	                        row[4] = resultSet.getString("VilleArrivee");
+	                        row[5] = resultSet.getString("DateDepart");
+	                        row[6] = resultSet.getString("HeureDepart");
+	                        row[7] = "Éditer";
+
+	                        ((DefaultTableModel) table_1.getModel()).addRow(row);
+	                    }
+	                } catch (SQLException e) {
+	                    e.printStackTrace();
+	                }
+	            } else {
+	                System.out.println("La connexion à la base de données a échoué.");
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        }
+		
+	        
+	      
 		
 		//Fonction Ajout dans la BD
 		btnAdd.addActionListener(new ActionListener() {
@@ -273,7 +300,7 @@ public class Trajet extends JFrame {
 
 			            // Exécuter la requête
 			            int rowsAffected = preparedStatement.executeUpdate();
-
+			            refreshTable();
 			            // Vérifier si l'insertion a réussi
 			            if (rowsAffected > 0) {
 			            	JOptionPane.showMessageDialog(null, "Données ajoutées avec succès", null, 0);
@@ -292,7 +319,42 @@ public class Trajet extends JFrame {
 			    
 			    System.out.println(" Code Trajet :"+codeTrajet+"\n Bus Associe : "+Bus+"\n Nom Trajet :"+nomTrajet+"\n Ville Depart :"+Depart+"\n Ville Arrivee :"+Arrivee+"\n Date Depart :"+dateSql+"\n Heure Depart :"+heureSql);
 			}
+			
+			  private void refreshTable() {
+	                // Effacer toutes les lignes actuelles du modèle
+	                DefaultTableModel model = (DefaultTableModel) table_1.getModel();
+	                model.setRowCount(0);
 
+	                // Remplir à nouveau le tableau avec les données mises à jour de la base de données
+	                try (Connection connection = ConnexionBD.getConnection()) {
+	    	            if (connection != null) {
+	    	                String query = "SELECT codeTrajet, BusAssocie, NomTrajet, VilleDepart, VilleArrivee, DateDepart, HeureDepart FROM Trajet";
+	    	                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+	    	                     ResultSet resultSet = preparedStatement.executeQuery()) {
+
+	    	                    while (resultSet.next()) {
+	    	                        Object[] row = new Object[8]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
+	    	                        row[0] = resultSet.getString("CodeTrajet");
+	    	                        row[1] = resultSet.getString("BusAssocie");
+	    	                        row[2] = resultSet.getString("NomTrajet");
+	    	                        row[3] = resultSet.getString("VilleDepart");
+	    	                        row[4] = resultSet.getString("VilleArrivee");
+	    	                        row[5] = resultSet.getString("DateDepart");
+	    	                        row[6] = resultSet.getString("HeureDepart");
+	    	                        row[7] = "Éditer";
+
+	    	                        ((DefaultTableModel) table_1.getModel()).addRow(row);
+	    	                    }
+	    	                } catch (SQLException e) {
+	    	                    e.printStackTrace();
+	    	                }
+	    	            } else {
+	    	                System.out.println("La connexion à la base de données a échoué.");
+	    	            }
+	    	        } catch (SQLException e) {
+	    	            e.printStackTrace();
+	    	        }
+	            }
 			
 		});
 		
