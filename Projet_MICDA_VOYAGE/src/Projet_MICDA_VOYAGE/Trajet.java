@@ -151,7 +151,6 @@ public class Trajet extends JFrame {
 		contentPane.add(labelHeureDepart);
 		
 		JButton btnUpdate = new JButton("Update");
-		
 		btnUpdate.setBounds(411, 254, 117, 35);
 		btnUpdate.setFont(new Font("Lucida Grande", Font.BOLD, 16));
 		btnUpdate.setForeground(UIManager.getColor("CheckBox.foreground"));
@@ -225,11 +224,7 @@ public class Trajet extends JFrame {
 		
 		
 		
-		
-		
-		
-		
-		//Update selection d'une ligne du tableau pour le maj
+		// Mise A jour
 		btnUpdate.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		        try (Connection connection = ConnexionBD.getConnection()) {
@@ -257,8 +252,8 @@ public class Trajet extends JFrame {
 		                        preparedStatement.setString(2, nomTrajet);
 		                        preparedStatement.setString(3, villeDepart);
 		                        preparedStatement.setString(4, villeArrivee);
-		                        // preparedStatement.setDate(5, new java.sql.Date(dateDepart.getTime())); // Adapté selon votre modèle
-		                       // preparedStatement.setString(5, dateDepart); // À adapter selon votre modèle de date
+		                        //preparedStatement.setDate(5, new java.sql.Date(dateDepart.getDate())); // Adapté selon votre modèle
+		                       
 		                        preparedStatement.setString(5, heureDepart);
 		                        preparedStatement.setString(6, codeTrajet);
 
@@ -283,6 +278,7 @@ public class Trajet extends JFrame {
 		    }
 		});
 
+		//selection d'une ligne du tableau pour le maj
 		table_1.addMouseListener(new MouseAdapter() {
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
@@ -431,7 +427,7 @@ public class Trajet extends JFrame {
 			    System.out.println(" Code Trajet :"+codeTrajet+"\n Bus Associe : "+Bus+"\n Nom Trajet :"+nomTrajet+"\n Ville Depart :"+Depart+"\n Ville Arrivee :"+Arrivee+"\n Date Depart :"+dateSql+"\n Heure Depart :"+heureSql);
 			}
 			
-			  public void refreshTable() {
+			  private void refreshTable() {
 	                // Effacer toutes les lignes actuelles du modèle
 	                DefaultTableModel model = (DefaultTableModel) table_1.getModel();
 	                model.setRowCount(0);
@@ -469,48 +465,7 @@ public class Trajet extends JFrame {
 			
 		});
 		
-		
-		
-		
-		
-		
-		//Fonction Suppression
 		btnDelete.addActionListener(new ActionListener() {
-			public void refreshTable() {
-                // Effacer toutes les lignes actuelles du modèle
-                DefaultTableModel model = (DefaultTableModel) table_1.getModel();
-                model.setRowCount(0);
-
-                // Remplir à nouveau le tableau avec les données mises à jour de la base de données
-                try (Connection connection = ConnexionBD.getConnection()) {
-    	            if (connection != null) {
-    	                String query = "SELECT codeTrajet, BusAssocie, NomTrajet, VilleDepart, VilleArrivee, DateDepart, HeureDepart FROM Trajet";
-    	                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
-    	                     ResultSet resultSet = preparedStatement.executeQuery()) {
-
-    	                    while (resultSet.next()) {
-    	                        Object[] row = new Object[8]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
-    	                        row[0] = resultSet.getString("CodeTrajet");
-    	                        row[1] = resultSet.getString("BusAssocie");
-    	                        row[2] = resultSet.getString("NomTrajet");
-    	                        row[3] = resultSet.getString("VilleDepart");
-    	                        row[4] = resultSet.getString("VilleArrivee");
-    	                        row[5] = resultSet.getString("DateDepart");
-    	                        row[6] = resultSet.getString("HeureDepart");
-    	                        row[7] = "Éditer";
-
-    	                        ((DefaultTableModel) table_1.getModel()).addRow(row);
-    	                    }
-    	                } catch (SQLException e) {
-    	                    e.printStackTrace();
-    	                }
-    	            } else {
-    	                System.out.println("La connexion à la base de données a échoué.");
-    	            }
-    	        } catch (SQLException e) {
-    	            e.printStackTrace();
-    	        }
-            }
 		    public void actionPerformed(ActionEvent e) {
 		        // Vérifier si une ligne est sélectionnée
 		        int selectedRow = table_1.getSelectedRow();
@@ -527,12 +482,13 @@ public class Trajet extends JFrame {
 		                    try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 		                        // Paramètre de la requête
 		                        preparedStatement.setString(1, codeTrajet);
-		                        
+
 		                        // Exécuter la requête
 		                        int rowsAffected = preparedStatement.executeUpdate();
-		                        refreshTable();
+		                        
 		                        // Rafraîchir le tableau après la suppression
-		                       
+		                        // refreshTable();
+		                        
 		                        JOptionPane.showMessageDialog(null, "Ligne supprimée avec succès", null, JOptionPane.INFORMATION_MESSAGE);
 		                    }
 		                } catch (SQLException ev) {
@@ -543,9 +499,7 @@ public class Trajet extends JFrame {
 		        } else {
 		            JOptionPane.showMessageDialog(null, "Aucune ligne sélectionnée", null, JOptionPane.WARNING_MESSAGE);
 		        }
-		        
 		    }
-		    
 		});
 
 
