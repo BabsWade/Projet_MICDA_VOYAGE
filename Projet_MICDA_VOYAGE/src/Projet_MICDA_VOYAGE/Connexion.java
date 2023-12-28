@@ -10,6 +10,7 @@ import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 import java.awt.Toolkit;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 import java.awt.Font;
 import javax.swing.JTextField;
@@ -17,9 +18,15 @@ import javax.swing.JButton;
 import javax.swing.JPasswordField;
 import org.eclipse.wb.swing.FocusTraversalOnArray;
 import java.awt.Component;
-
+import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.awt.event.ActionEvent;
+import  Projet_MICDA_VOYAGE.ConnexionBD;
 public class Connexion extends JFrame {
-
+	private ConnexionBD connexionDB;
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private JTextField txtUser;
@@ -44,6 +51,46 @@ public class Connexion extends JFrame {
 	/**
 	 * Create the frame.
 	 */
+	private void openTrajetInterface() {
+	    EventQueue.invokeLater(new Runnable() {
+	        public void run() {
+	            try {
+	                Trajet frame = new Trajet();
+	                frame.setVisible(true);
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	            }
+	        }
+	    });
+	}
+
+	// Function to handle user authentication
+    private boolean authenticateUser(String username, String password) {
+        // Connexion à la base de données
+        try (Connection connection = connexionDB.getConnection()) {
+            if (connection != null) {
+                // Requête SQL pour la vérification des informations d'identification
+                String query = "SELECT * FROM Users WHERE username=? AND password=?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    // Paramètres de la requête
+                    preparedStatement.setString(1, username);
+                    preparedStatement.setString(2, password);
+
+                    // Exécution de la requête
+                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                        // Si une correspondance est trouvée, l'utilisateur est authentifié
+                        return resultSet.next();
+                    }
+                }
+            } else {
+                System.out.println("La connexion à la base de données a échoué.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+	
 	public Connexion() {
 		setTitle("Page Connexion");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -86,7 +133,29 @@ public class Connexion extends JFrame {
 		labelPassword.setBounds(100, 307, 100, 16);
 		Connexion.add(labelPassword);
 		
+		
+		
+		
+		// Connexion
 		JButton btnConnexion = new JButton("Connexion");
+		btnConnexion.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+		        // Récupérer les informations saisies par l'utilisateur
+		        String username = txtUser.getText();
+		        String password = new String(txtPassword.getPassword());
+
+		        // Vérifier les informations d'identification
+		        if (authenticateUser(username, password)) {
+		            // Utilisateur authentifié, redirigez vers la page Trajet
+		            dispose(); // Ferme la fenêtre de connexion
+		            openTrajetInterface(); // Ouvre la fenêtre Trajet
+		        } else {
+		            // Authentification échouée, afficher un message d'erreur
+		            JOptionPane.showMessageDialog(null, "Identifiant ou mot de passe incorrect. Veuillez entrer vos informations correctes.", "Erreur d'authentification", JOptionPane.ERROR_MESSAGE);
+		        }
+		    }
+		});
+
 		btnConnexion.setBackground(new Color(7, 73, 217));
 		btnConnexion.setFont(new Font("Lucida Grande", Font.BOLD, 16));
 		btnConnexion.setForeground(Color.decode("#04224c"));
@@ -97,5 +166,6 @@ public class Connexion extends JFrame {
 		txtPassword.setBounds(200, 303, 225, 30);
 		Connexion.add(txtPassword);
 		Connexion.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{lableTitle, txtUser, labelUsername, labelPassword, btnConnexion, txtPassword}));
+		
 	}
 }
