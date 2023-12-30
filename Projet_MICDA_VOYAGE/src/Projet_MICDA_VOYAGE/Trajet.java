@@ -24,6 +24,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -55,10 +56,9 @@ public class Trajet extends JFrame {
 	private JPanel contentPane;
 	private JTextField txtCodeTrajet;
 	private JTextField txtNomTrajet;
+	private JDateChooser DateDepart;
+	
 	private JTable tableTrajet;
-	private JDateChooser dateDepart;
-	private JTable table;
-	private JTable table_1;
 	/**
 	 * Launch the application.
 	 */
@@ -78,6 +78,76 @@ public class Trajet extends JFrame {
 	/**
 	 * Create the frame.
 	 */
+	//Affichage 
+			private void affichage() {
+				try (Connection connection = ConnexionBD.getConnection()) {
+		            if (connection != null) {
+		                String query = "SELECT codeTrajet, BusAssocie, NomTrajet, VilleDepart, VilleArrivee, DateDepart, HeureDepart FROM Trajet ORDER BY DateDepart DESC";
+		                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+		                     ResultSet resultSet = preparedStatement.executeQuery()) {
+
+		                    while (resultSet.next()) {
+		                        Object[] row = new Object[8]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
+		                        row[0] = resultSet.getString("CodeTrajet");
+		                        row[1] = resultSet.getString("BusAssocie");
+		                        row[2] = resultSet.getString("NomTrajet");
+		                        row[3] = resultSet.getString("VilleDepart");
+		                        row[4] = resultSet.getString("VilleArrivee");
+		                        row[5] = resultSet.getString("DateDepart");
+		                        row[6] = resultSet.getString("HeureDepart");
+		                        row[7] = "Éditer";
+
+		                        ((DefaultTableModel) tableTrajet.getModel()).addRow(row);
+		                    }
+		                } catch (SQLException e) {
+		                    e.printStackTrace();
+		                }
+		            } else {
+		            	  JOptionPane.showMessageDialog(null, "Erreur de connexion à la base de données", null, 0);
+		            }
+		        } catch (SQLException e) {
+		            e.printStackTrace();
+		        }
+			}
+			
+			//Refresh
+			 private void refreshTable() {
+	                // Effacer toutes les lignes actuelles du modèle
+	                DefaultTableModel model = (DefaultTableModel) tableTrajet.getModel();
+	                model.setRowCount(0);
+
+	                // Remplir à nouveau le tableau avec les données mises à jour de la base de données
+	                try (Connection connection = ConnexionBD.getConnection()) {
+	    	            if (connection != null) {
+	    	                String query = "SELECT codeTrajet, BusAssocie, NomTrajet, VilleDepart, VilleArrivee, DateDepart, HeureDepart FROM Trajet";
+	    	                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+	    	                     ResultSet resultSet = preparedStatement.executeQuery()) {
+
+	    	                    while (resultSet.next()) {
+	    	                        Object[] row = new Object[8]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
+	    	                        row[0] = resultSet.getString("CodeTrajet");
+	    	                        row[1] = resultSet.getString("BusAssocie");
+	    	                        row[2] = resultSet.getString("NomTrajet");
+	    	                        row[3] = resultSet.getString("VilleDepart");
+	    	                        row[4] = resultSet.getString("VilleArrivee");
+	    	                        row[5] = resultSet.getString("DateDepart");
+	    	                        row[6] = resultSet.getString("HeureDepart");
+	    	                        
+
+	    	                        ((DefaultTableModel) tableTrajet.getModel()).addRow(row);
+	    	                    }
+	    	                } catch (SQLException e) {
+	    	                    e.printStackTrace();
+	    	                }
+	    	            } else {
+	    	            	  JOptionPane.showMessageDialog(null, "Erreur de connexion à la base de données", null, 0);
+	    	            }
+	    	        } catch (SQLException e) {
+	    	            e.printStackTrace();
+	    	            
+	    	        }
+	            }
+			
 	public Trajet() {
 		//connexionDB = new ConnexionDB();
 		setTitle("Trajet Bus");
@@ -196,9 +266,9 @@ public class Trajet extends JFrame {
 		
 		
 		//Date depart
-		dateDepart = new JDateChooser();
-		dateDepart.setBounds(850, 165, 200, 30);
-		getContentPane().add(dateDepart);
+		DateDepart = new JDateChooser();
+		DateDepart.setBounds(850, 165, 200, 30);
+		getContentPane().add(DateDepart);
 		
 		
 		//heureDepart
@@ -213,14 +283,14 @@ public class Trajet extends JFrame {
 		scrollpane.setBounds(50, 300, 1350, 450);
 		getContentPane().add(scrollpane);
 		
-		table_1 = new JTable();
-		table_1.setInheritsPopupMenu(true);
-		table_1.setIgnoreRepaint(true);
-		table_1.setAutoCreateRowSorter(true);
-		table_1.setDragEnabled(true);
-		table_1.setDoubleBuffered(true);
-		table_1.setFocusCycleRoot(true);
-		table_1.setFocusTraversalPolicyProvider(true);
+		tableTrajet = new JTable();
+		tableTrajet.setInheritsPopupMenu(true);
+		tableTrajet.setIgnoreRepaint(true);
+		tableTrajet.setAutoCreateRowSorter(true);
+		tableTrajet.setDragEnabled(true);
+		tableTrajet.setDoubleBuffered(true);
+		tableTrajet.setFocusCycleRoot(true);
+		tableTrajet.setFocusTraversalPolicyProvider(true);
 		
 		
 		
@@ -230,12 +300,12 @@ public class Trajet extends JFrame {
 		        try (Connection connection = ConnexionBD.getConnection()) {
 		            if (connection != null) {
 		                // Obtenir la ligne sélectionnée
-		                int selectedRow = table_1.getSelectedRow();
+		                int selectedRow = tableTrajet.getSelectedRow();
 
 		                // Vérifier si une ligne est sélectionnée
 		                if (selectedRow != -1) {
 		                    // Récupérer les données de la ligne sélectionnée
-		                    String codeTrajet = table_1.getValueAt(selectedRow, 0).toString();
+		                    String codeTrajet = tableTrajet.getValueAt(selectedRow, 0).toString();
 		                    String busAssocie = comboBoxBusAssocie.getSelectedItem().toString();
 		                    String nomTrajet = txtNomTrajet.getText();
 		                    String villeDepart = comboBoxVilleDepart.getSelectedItem().toString();
@@ -245,23 +315,26 @@ public class Trajet extends JFrame {
 		                    String heureDepart = txtHeureDepart.getText();
 
 		                    // Requête SQL pour la mise à jour des données
-		                    String query = "UPDATE Trajet SET BusAssocie=?, NomTrajet=?, VilleDepart=?, VilleArrivee=?, HeureDepart=? WHERE CodeTrajet=?";
+		                    String query = "UPDATE Trajet SET BusAssocie=?, NomTrajet=?, VilleDepart=?, VilleArrivee=?, DateDepart=?, HeureDepart=? WHERE CodeTrajet=?";
 		                    try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 		                        // Paramètres de la requête
 		                        preparedStatement.setString(1, busAssocie);
 		                        preparedStatement.setString(2, nomTrajet);
 		                        preparedStatement.setString(3, villeDepart);
 		                        preparedStatement.setString(4, villeArrivee);
-		                        //preparedStatement.setDate(5, new java.sql.Date(dateDepart.getDate())); // Adapté selon votre modèle
+		                        java.util.Date utilDate = DateDepart.getDate();
+		                        java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+		                        preparedStatement.setDate(5, sqlDate);
+
 		                       
-		                        preparedStatement.setString(5, heureDepart);
-		                        preparedStatement.setString(6, codeTrajet);
+		                        preparedStatement.setString(6, heureDepart);
+		                        preparedStatement.setString(7, codeTrajet);
 
 		                        // Exécuter la requête de mise à jour
 		                        int rowsAffected = preparedStatement.executeUpdate();
 
 		                        // Rafraîchir le tableau après la mise à jour
-		                        // refreshTable();
+		                        refreshTable();
 		                        
 		                        JOptionPane.showMessageDialog(null, "Données mises à jour avec succès", null, JOptionPane.INFORMATION_MESSAGE);
 		                    }
@@ -279,24 +352,35 @@ public class Trajet extends JFrame {
 		});
 
 		//selection d'une ligne du tableau pour le maj
-		table_1.addMouseListener(new MouseAdapter() {
+		tableTrajet.addMouseListener(new MouseAdapter() {
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
 		        try (Connection connection = ConnexionBD.getConnection()) {
 		            if (connection != null) {
 		                // Obtenir la ligne sélectionnée
-		                int selectedRow = table_1.getSelectedRow();
+		                int selectedRow = tableTrajet.getSelectedRow();
 
 		                // Vérifier si une ligne est sélectionnée
 		                if (selectedRow != -1) {
 		                    // Récupérer les données de la ligne sélectionnée
-		                    String codeTrajet = table_1.getValueAt(selectedRow, 0).toString();
-		                    String busAssocie = table_1.getValueAt(selectedRow, 1).toString();
-		                    String nomTrajet = table_1.getValueAt(selectedRow, 2).toString();
-		                    String villeDepart = table_1.getValueAt(selectedRow, 3).toString();
-		                    String villeArrivee = table_1.getValueAt(selectedRow, 4).toString();
-		                    String dateDepart = table_1.getValueAt(selectedRow, 5).toString();
-		                    String heureDepart = table_1.getValueAt(selectedRow, 6).toString();
+		                    String codeTrajet = tableTrajet.getValueAt(selectedRow, 0).toString();
+		                    String busAssocie = tableTrajet.getValueAt(selectedRow, 1).toString();
+		                    String nomTrajet = tableTrajet.getValueAt(selectedRow, 2).toString();
+		                    String villeDepart = tableTrajet.getValueAt(selectedRow, 3).toString();
+		                    String villeArrivee = tableTrajet.getValueAt(selectedRow, 4).toString();
+		                 // En supposant que dateDepart est au format "yyyy-MM-dd"
+		                    String dateDepartString = tableTrajet.getValueAt(selectedRow, 5).toString();
+		                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+		                    try {
+		                        Date parsedDate = dateFormat.parse(dateDepartString);
+		                        DateDepart.setDate(parsedDate);
+		                    } catch (ParseException ev) {
+		                        ev.printStackTrace();
+		                        // Gérez l'exception de parsing de manière appropriée
+		                    }
+
+		                    String heureDepart = tableTrajet.getValueAt(selectedRow, 6).toString();
 
 		                    // Utiliser les données récupérées comme nécessaire
 		                    txtCodeTrajet.setText(codeTrajet);
@@ -304,7 +388,7 @@ public class Trajet extends JFrame {
 		                    txtNomTrajet.setText(nomTrajet);
 		                    comboBoxVilleDepart.setSelectedItem(villeDepart);
 		                    comboBoxVilleArrivee.setSelectedItem(villeArrivee);
-		                    // dateDepart.setDate(/* convertir dateDepart en java.util.Date si nécessaire */);		                    
+		                                        
 		                    txtHeureDepart.setText(heureDepart);
 		                }
 		            } else {
@@ -317,21 +401,21 @@ public class Trajet extends JFrame {
 		});
 
 		
-		scrollpane.setViewportView(table_1);
+		scrollpane.setViewportView(tableTrajet);
 		//Create a separate component for column headers
-		JTableHeader header = table_1.getTableHeader();
+		JTableHeader header = tableTrajet.getTableHeader();
 		scrollpane.setColumnHeaderView(header);
-		table_1.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		tableTrajet.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		//table_1.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
-		table_1.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
+		tableTrajet.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
 		header.setFont(new Font("Lucida Grande", Font.PLAIN, 16));
-		table_1.setForeground(UIManager.getColor("Button.darkShadow"));
-		table_1.setBackground(UIManager.getColor("Button.highlight"));
-		table_1.setFillsViewportHeight(true);
-		table_1.setColumnSelectionAllowed(true);
-		table_1.setCellSelectionEnabled(true);
-		table_1.setSurrendersFocusOnKeystroke(true);
-		table_1.setModel(new DefaultTableModel(
+		tableTrajet.setForeground(UIManager.getColor("Button.darkShadow"));
+		tableTrajet.setBackground(UIManager.getColor("Button.highlight"));
+		tableTrajet.setFillsViewportHeight(true);
+		tableTrajet.setColumnSelectionAllowed(true);
+		tableTrajet.setCellSelectionEnabled(true);
+		tableTrajet.setSurrendersFocusOnKeystroke(true);
+		tableTrajet.setModel(new DefaultTableModel(
 				new Object[][] {
 					
 				},
@@ -340,36 +424,8 @@ public class Trajet extends JFrame {
 				}
 				));
 		
-		//Affichage 
-		
-	        try (Connection connection = ConnexionBD.getConnection()) {
-	            if (connection != null) {
-	                String query = "SELECT codeTrajet, BusAssocie, NomTrajet, VilleDepart, VilleArrivee, DateDepart, HeureDepart FROM Trajet ORDER BY DateDepart DESC";
-	                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
-	                     ResultSet resultSet = preparedStatement.executeQuery()) {
-
-	                    while (resultSet.next()) {
-	                        Object[] row = new Object[8]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
-	                        row[0] = resultSet.getString("CodeTrajet");
-	                        row[1] = resultSet.getString("BusAssocie");
-	                        row[2] = resultSet.getString("NomTrajet");
-	                        row[3] = resultSet.getString("VilleDepart");
-	                        row[4] = resultSet.getString("VilleArrivee");
-	                        row[5] = resultSet.getString("DateDepart");
-	                        row[6] = resultSet.getString("HeureDepart");
-	                        row[7] = "Éditer";
-
-	                        ((DefaultTableModel) table_1.getModel()).addRow(row);
-	                    }
-	                } catch (SQLException e) {
-	                    e.printStackTrace();
-	                }
-	            } else {
-	                System.out.println("La connexion à la base de données a échoué.");
-	            }
-	        } catch (SQLException e) {
-	            e.printStackTrace();
-	        }
+		//Affichage
+	    affichage();    
 		
 	        
 	      
@@ -384,13 +440,27 @@ public class Trajet extends JFrame {
 				 String Arrivee = comboBoxVilleArrivee.getSelectedItem().toString();
 				 String Bus = comboBoxBusAssocie.getSelectedItem().toString();
 				// Récupérer la date de départ
-			    Date date = dateDepart.getDate();
+			    Date date = DateDepart.getDate();
 			    java.sql.Date dateSql = new java.sql.Date(date.getTime());
 			 // Récupérer l'heure de départ
 			    Date heure = (Date) txtHeureDepart.getValue();
 			    java.sql.Time heureSql = new java.sql.Time(heure.getTime());
-			
-			 // Connexion à la base de données
+			     
+			    // Effacer le contenu des JTextField après l'ajout
+		        txtCodeTrajet.setText("");
+		        txtNomTrajet.setText("");
+		        // Ajoutez le code pour réinitialiser les autres champs JTextField ici
+
+		        // Effacer le contenu des JComboBox
+		        comboBoxVilleDepart.setSelectedIndex(0);  // Sélectionnez l'index par défaut ou -1 si vous le souhaitez
+		        comboBoxVilleArrivee.setSelectedIndex(0);
+		        comboBoxBusAssocie.setSelectedIndex(0);
+
+		        // Effacer le contenu des composants de date et d'heure
+		        DateDepart.setDate(null);
+		        txtHeureDepart.setValue(null);
+
+		        // Connexion à la base de données
 			    try (Connection connection = connexionDB.getConnection()) {
 		            // Utilisez la connexion pour vos opérations sur la base de données
 			    	 // Requête SQL pour l'insertion des données
@@ -427,54 +497,20 @@ public class Trajet extends JFrame {
 			    System.out.println(" Code Trajet :"+codeTrajet+"\n Bus Associe : "+Bus+"\n Nom Trajet :"+nomTrajet+"\n Ville Depart :"+Depart+"\n Ville Arrivee :"+Arrivee+"\n Date Depart :"+dateSql+"\n Heure Depart :"+heureSql);
 			}
 			
-			  private void refreshTable() {
-	                // Effacer toutes les lignes actuelles du modèle
-	                DefaultTableModel model = (DefaultTableModel) table_1.getModel();
-	                model.setRowCount(0);
-
-	                // Remplir à nouveau le tableau avec les données mises à jour de la base de données
-	                try (Connection connection = ConnexionBD.getConnection()) {
-	    	            if (connection != null) {
-	    	                String query = "SELECT codeTrajet, BusAssocie, NomTrajet, VilleDepart, VilleArrivee, DateDepart, HeureDepart FROM Trajet";
-	    	                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
-	    	                     ResultSet resultSet = preparedStatement.executeQuery()) {
-
-	    	                    while (resultSet.next()) {
-	    	                        Object[] row = new Object[8]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
-	    	                        row[0] = resultSet.getString("CodeTrajet");
-	    	                        row[1] = resultSet.getString("BusAssocie");
-	    	                        row[2] = resultSet.getString("NomTrajet");
-	    	                        row[3] = resultSet.getString("VilleDepart");
-	    	                        row[4] = resultSet.getString("VilleArrivee");
-	    	                        row[5] = resultSet.getString("DateDepart");
-	    	                        row[6] = resultSet.getString("HeureDepart");
-	    	                        row[7] = "Éditer";
-
-	    	                        ((DefaultTableModel) table_1.getModel()).addRow(row);
-	    	                    }
-	    	                } catch (SQLException e) {
-	    	                    e.printStackTrace();
-	    	                }
-	    	            } else {
-	    	                System.out.println("La connexion à la base de données a échoué.");
-	    	            }
-	    	        } catch (SQLException e) {
-	    	            e.printStackTrace();
-	    	        }
-	            }
+			 
 			
 		});
 		
 		btnDelete.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		        // Vérifier si une ligne est sélectionnée
-		        int selectedRow = table_1.getSelectedRow();
+		        int selectedRow = tableTrajet.getSelectedRow();
 		        if (selectedRow != -1) {
 		            int confirmation = JOptionPane.showConfirmDialog(null, "Voulez-vous vraiment supprimer cette ligne ?", "Confirmation de suppression", JOptionPane.YES_NO_OPTION);
 		            
 		            // Vérifier la réponse de l'utilisateur
 		            if (confirmation == JOptionPane.YES_OPTION) {
-		                String codeTrajet = table_1.getValueAt(selectedRow, 0).toString();
+		                String codeTrajet = tableTrajet.getValueAt(selectedRow, 0).toString();
 		                try (Connection connection = connexionDB.getConnection()) {
 		                    // Utilisez la connexion pour vos opérations sur la base de données
 		                    // Requête SQL pour la suppression des données
@@ -487,7 +523,7 @@ public class Trajet extends JFrame {
 		                        int rowsAffected = preparedStatement.executeUpdate();
 		                        
 		                        // Rafraîchir le tableau après la suppression
-		                        // refreshTable();
+		                        refreshTable();
 		                        
 		                        JOptionPane.showMessageDialog(null, "Ligne supprimée avec succès", null, JOptionPane.INFORMATION_MESSAGE);
 		                    }
