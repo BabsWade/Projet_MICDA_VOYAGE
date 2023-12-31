@@ -29,7 +29,11 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
 public class ListeBus extends JFrame {
-    private JTable table;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7638335444232733266L;
+	private JTable table;
 
     public ListeBus() {
         setTitle("Tableau des Bus");
@@ -45,6 +49,7 @@ public class ListeBus extends JFrame {
         model.addColumn("NombreSiege");
         model.addColumn("EtatBus");
         model.addColumn("Action");
+        
 
         fillTable();
 
@@ -83,8 +88,8 @@ public class ListeBus extends JFrame {
                 if (result == JOptionPane.OK_OPTION) {
                     // Ajouter les données à la base de données
                     try (Connection connection = ConnexionBD.getConnection()) {
-                        String query = "INSERT INTO bus (CodeBus, NomBus, Description, NombreSiege, EtatBus) " +
-                                "VALUES (?, ?, ?, ?, ?)";
+                        String query = "INSERT INTO bus (CodeBus, NomBus, Description, NombreSiege, EtatBus, SiegeRestant) " +
+                                "VALUES (?, ?, ?, ?, ?, 0)";
                         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                             preparedStatement.setString(1, codeField.getText());
                             preparedStatement.setString(2, nomField.getText());
@@ -114,6 +119,64 @@ public class ListeBus extends JFrame {
 
                 // Remplir à nouveau le tableau avec les données mises à jour de la base de données
                 fillTable();
+
+                // Récupérer le nombre d'enregistrements dans la table "ticket"
+                int nombreEnregistrements = getNombreEnregistrementsTicket();
+                System.out.println("Nombre d'enregistrements dans la table 'ticket': " + nombreEnregistrements);
+
+                // Mettre à jour la colonne SiegeReserve dans la table bus
+                updateSiegeReserve(nombreEnregistrements);
+            }
+            private void updateSiegeReserve(int nombreEnregistrements) {
+                try (Connection connection = ConnexionBD.getConnection()) {
+                    if (connection != null) {
+                        String updateQuery = "UPDATE bus SET SiegeReserve = ?, SiegeRestant = (NombreSiege - ?)";
+                    	//String updateQuery = "UPDATE bus SET NomBus = ?, Description = ?, SiegeReserve = ?, SiegeRestant = (NombreSiege - ?), EtatBus = ? WHERE CodeBus = ?";
+
+                        try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+                            preparedStatement.setInt(1, nombreEnregistrements);
+                            preparedStatement.setInt(2, nombreEnregistrements);
+                           // preparedStatement.setInt(3, nombreEnregistrements);
+                            preparedStatement.executeUpdate();
+                        	//preparedStatement.setInt(1, nombreEnregistrements);
+                        	//preparedStatement.setInt(2, nombreEnregistrements);
+                        	//preparedStatement.setInt(3, nombreEnregistrements);
+                        	//preparedStatement.setInt(4, nombreEnregistrements);  // Utilisation de nombreSiege à deux endroits différents, ajustez si nécessaire
+                        	//preparedStatement.setInt(5, nombreEnregistrements);
+                        	//preparedStatement.setInt(6, nombreEnregistrements);
+                        	//preparedStatement.executeUpdate();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("La connexion à la base de données a échoué.");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            
+            private int getNombreEnregistrementsTicket() {
+                int nombreEnregistrements = 0;
+                try (Connection connection = ConnexionBD.getConnection()) {
+                    if (connection != null) {
+                        String query = "SELECT COUNT(*) FROM ticket";
+                        try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+                             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                            if (resultSet.next()) {
+                                nombreEnregistrements = resultSet.getInt(1);
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("La connexion à la base de données a échoué.");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return nombreEnregistrements;
             }
 
         });
@@ -121,11 +184,22 @@ public class ListeBus extends JFrame {
 
         
         
-        deleteButton.addActionListener(new ActionListener() {
+        /**deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Code pour supprimer un bus
                 // ...
+            }
+        });**/
+        
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Lorsque le bouton est cliqué, instanciez la classe AutreFenetre
+                SuppBus suppBus = new SuppBus();
+                
+                // Affichez la nouvelle fenêtre
+                suppBus.setVisible(true);
             }
         });
 
@@ -183,13 +257,15 @@ public class ListeBus extends JFrame {
                      ResultSet resultSet = preparedStatement.executeQuery()) {
 
                     while (resultSet.next()) {
-                        Object[] row = new Object[6]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
+                        Object[] row = new Object[7]; // Ajoutez une colonne supplémentaire pour le bouton "Éditer"
                         row[0] = resultSet.getString("CodeBus");
                         row[1] = resultSet.getString("NomBus");
                         row[2] = resultSet.getString("Description");
                         row[3] = resultSet.getInt("NombreSiege");
                         row[4] = resultSet.getString("EtatBus");
                         row[5] = "Éditer";
+                        row[6]= 0;
+                    
 
                         ((DefaultTableModel) table.getModel()).addRow(row);
                     }
@@ -204,10 +280,14 @@ public class ListeBus extends JFrame {
         }
     }
 
-    public void editerBus(String codeBus, String nomBus, String description, int nombreSiege, String etatBus) {
-        String query = "UPDATE bus SET NomBus = ?, Description = ?, NombreSiege = ?, EtatBus = ? WHERE CodeBus = ?";
+    /**public void editerBus(String codeBus, String nomBus, String description, int nombreSiege, String etatBus) {
+        
+        //String updateQuery = "UPDATE bus SET SiegeReserve = ?, SiegeRestant = (NombreSiege - ?)";
+    	String updateQuery = "UPDATE bus SET NomBus = ?, Description = ?, SiegeReserve = ?, SiegeRestant = (NombreSiege - ?), EtatBus = ? WHERE CodeBus = ?";
+
+        System.out.println("Query: " + updateQuery);
         try (Connection connection = ConnexionBD.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
 
             preparedStatement.setString(1, nomBus);
             preparedStatement.setString(2, description);
@@ -219,7 +299,26 @@ public class ListeBus extends JFrame {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }**/
+    
+    public void editerBus(String codeBus, String nomBus, String description, int nombreSiege, String etatBus) {
+        String updateQuery = "UPDATE bus SET NomBus = ?, Description = ?, SiegeReserve = ?, SiegeRestant = (NombreSiege - ?), EtatBus = ? WHERE CodeBus = ?";
+        try (Connection connection = ConnexionBD.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+
+            preparedStatement.setString(1, nomBus);
+            preparedStatement.setString(2, description);
+            preparedStatement.setInt(3, nombreSiege);
+            preparedStatement.setInt(4, nombreSiege);  // Utilisation de nombreSiege à deux endroits différents, ajustez si nécessaire
+            preparedStatement.setString(5, etatBus);
+            preparedStatement.setString(6, codeBus);
+
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

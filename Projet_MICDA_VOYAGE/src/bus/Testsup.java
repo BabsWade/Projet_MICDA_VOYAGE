@@ -22,14 +22,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
-public class SuppBus extends JFrame {
+public class Testsup extends JFrame {
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = -5697902934882215541L;
 	private JTable table;
 
-    public SuppBus() {
+    public Testsup() {
         setTitle("Tableau des Bus");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
@@ -42,7 +42,7 @@ public class SuppBus extends JFrame {
         model.addColumn("Description");
         model.addColumn("NombreSiege");
         model.addColumn("EtatBus");
-        //model.addColumn("Éditer");
+        model.addColumn("Éditer");
         model.addColumn("Supprimer");
 
         fillTable();
@@ -74,7 +74,7 @@ public class SuppBus extends JFrame {
                 panel.add(new JLabel("EtatBus:"));
                 panel.add(etatBusField);
 
-                int result = JOptionPane.showConfirmDialog(SuppBus.this, panel, "Ajouter un Bus",
+                int result = JOptionPane.showConfirmDialog(Testsup.this, panel, "Ajouter un Bus",
                         JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
                 if (result == JOptionPane.OK_OPTION) {
@@ -99,17 +99,12 @@ public class SuppBus extends JFrame {
     }
     
     
- public SuppBus(ListeBus listeBus, String codeBusToDelete) {
-		// TODO Auto-generated constructor stub
-	}
-
-
-	// Ajouter une nouvelle classe pour la fenêtre d'édition
-   /** class EditBusWindow extends JFrame {
+ // Ajouter une nouvelle classe pour la fenêtre d'édition
+    class EditBusWindow extends JFrame {
         /**
 		 * 
 		 */
-	/**	private static final long serialVersionUID = 4691300486702745762L;
+		private static final long serialVersionUID = 4691300486702745762L;
 		private JTextField codeField;
         private JTextField nomField;
         private JTextField descriptionField;
@@ -150,7 +145,7 @@ public class SuppBus extends JFrame {
                     String newEtatBus = etatBusField.getText();
 
                     // Appeler la méthode pour éditer le bus
-                    SuppBus parentFrame = (SuppBus) SwingUtilities.getWindowAncestor(EditBusWindow.this);
+                    Testsup parentFrame = (Testsup) SwingUtilities.getWindowAncestor(EditBusWindow.this);
                     parentFrame.editerBus(newCodeBus, newNomBus, newDescription, newNombreSiege, newEtatBus);
                     parentFrame.refreshTable();
 
@@ -163,10 +158,10 @@ public class SuppBus extends JFrame {
 
             add(panel, BorderLayout.CENTER);
         }
-    }**/
+    }
 
     // Modifier la classe EditButtonListener pour utiliser la nouvelle fenêtre d'édition
-    /**class EditButtonListener implements ActionListener {
+    class EditButtonListener implements ActionListener {
         private int editedRow;
 
         public void setEditedRow(int editedRow) {
@@ -186,15 +181,15 @@ public class SuppBus extends JFrame {
             EditBusWindow editWindow = new EditBusWindow(codeBus, nomBus, description, nombreSiege, etatBus);
             editWindow.setVisible(true);
         }
-    }**/
+    }
 
 
     private void addEditAndDeleteButtonsToTable() {
-       // TableColumn editColumn = table.getColumnModel().getColumn(5);
-       // editColumn.setCellRenderer(new ButtonRenderer());
-       // editColumn.setCellEditor(new ButtonEditor(new JCheckBox(), new EditButtonListener()));
+        TableColumn editColumn = table.getColumnModel().getColumn(5);
+        editColumn.setCellRenderer(new ButtonRenderer());
+        editColumn.setCellEditor(new ButtonEditor(new JCheckBox(), new EditButtonListener()));
 
-        TableColumn deleteColumn = table.getColumnModel().getColumn(5);
+        TableColumn deleteColumn = table.getColumnModel().getColumn(6);
         deleteColumn.setCellRenderer(new ButtonRenderer());
         deleteColumn.setCellEditor(new ButtonEditor(new JCheckBox(), new DeleteButtonListener(table)));
     }
@@ -207,14 +202,14 @@ public class SuppBus extends JFrame {
                      ResultSet resultSet = preparedStatement.executeQuery()) {
 
                     while (resultSet.next()) {
-                        Object[] row = new Object[6];
+                        Object[] row = new Object[7];
                         row[0] = resultSet.getString("CodeBus");
                         row[1] = resultSet.getString("NomBus");
                         row[2] = resultSet.getString("Description");
                         row[3] = resultSet.getInt("NombreSiege");
                         row[4] = resultSet.getString("EtatBus");
-                        //row[5] = "Éditer";
-                        row[5] = "Supprimer";
+                        row[5] = "Éditer";
+                        row[6] = "Supprimer";
 
                         ((DefaultTableModel) table.getModel()).addRow(row);
                     }
@@ -307,14 +302,14 @@ public class SuppBus extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-        	SuppBus frame = new SuppBus();
+            Testsup frame = new Testsup();
             frame.setVisible(true);
         });
     }
 }
 
 
-class DeleteButtonListener implements ActionListener {
+/**class DeleteButtonListener implements ActionListener {
 	private int editedRow;
 
 	public void setEditedRow(int editedRow) {
@@ -335,10 +330,10 @@ class DeleteButtonListener implements ActionListener {
             String codeBus = table.getValueAt(editedRow, 0).toString();
 
             // Appeler la méthode de suppression
-            SuppBus parentFrame = (SuppBus) SwingUtilities.getWindowAncestor(table);
+            Testsup parentFrame = (Testsup) SwingUtilities.getWindowAncestor(table);
             parentFrame.supprimerBus(codeBus);
             parentFrame.refreshTable();
         }
         
     }
-}
+}**/
