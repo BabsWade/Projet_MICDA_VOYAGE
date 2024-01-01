@@ -99,7 +99,7 @@ public class ListeBus extends JFrame {
 
                             preparedStatement.executeUpdate();
 
-                            // Rafraîchir le tableau après l'ajout
+                            // Rafraîchir le tableau après ajout
                             refreshTable();
                         } catch (SQLException ex) {
                             ex.printStackTrace();
@@ -309,7 +309,7 @@ public class ListeBus extends JFrame {
             preparedStatement.setString(1, nomBus);
             preparedStatement.setString(2, description);
             preparedStatement.setInt(3, nombreSiege);
-            preparedStatement.setInt(4, nombreSiege);  // Utilisation de nombreSiege à deux endroits différents
+            preparedStatement.setInt(4, nombreSiege);  // Utilisation de nombreSiege à deux endroits différents, ajustez si nécessaire
             preparedStatement.setString(5, etatBus);
             preparedStatement.setString(6, codeBus);
 

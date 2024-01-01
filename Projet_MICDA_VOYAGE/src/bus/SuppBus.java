@@ -42,7 +42,6 @@ public class SuppBus extends JFrame {
         model.addColumn("Description");
         model.addColumn("NombreSiege");
         model.addColumn("EtatBus");
-        //model.addColumn("Éditer");
         model.addColumn("Supprimer");
 
         fillTable();
